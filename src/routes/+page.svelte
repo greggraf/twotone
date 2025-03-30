@@ -3,6 +3,29 @@
 	let fill = 'black';
 	let bar1 = 150;
 	let bar2 = 200;
+	let colorChoice = 0;
+
+	const thirdcolors = [
+		[255, 204, 204],
+		[100, 230, 20],
+		[20, 70, 180],
+		[180, 201, 90],
+		[50, 150, 250],
+		[90, 180, 20],
+		[204, 180, 20]
+	];
+
+	let hexColor = rgbToHex(thirdcolors[colorChoice]);
+
+	function changeColor() {
+        console.log(thirdcolors[colorChoice]);
+		colorChoice = colorChoice >= thirdcolors.length ? 0 : colorChoice + 1;
+		hexColor = rgbToHex(thirdcolors[colorChoice]);
+}
+
+	function rgbToHex(rgb) {
+		return `#${rgb[0].toString(16).padStart(2, '0')}${rgb[1].toString(16).padStart(2, '0')}${rgb[2].toString(16).padStart(2, '0')}`;
+	}
 
 	const changeFill = () => {
 		fill = 'red';
@@ -69,13 +92,12 @@
 						style="mix-blend-mode: multiply; opacity: .5"
 					/>
 				</g>
-				<g fill="green">
+				<g fill={hexColor}>
 					<rect
 						x={bar1}
 						y="0"
 						width={bar2 - bar1}
 						height="256"
-						fill="green"
 						style="mix-blend-mode: multiply; opacity: .5"
 					/>
 				</g>
@@ -90,15 +112,30 @@
 				</g>
 			</g>
 		</svg>
-        <div  style="display: flex">
-		<label for="bar1"
-			><div style="padding: 2px;height:2em; width:2.5em; background-color:black; color:white ">{bar1}</div>
-			<input class="sliders" bind:value={bar1} type="range" min="0" max={bar2} step="1" /></label
-		>
-		<label for="bar2"
-			><div style="padding: 2px;height:2em; width:2.5em; background-color:green; color:white ">{bar2}</div>
-			<input class="sliders" bind:value={bar2} type="range" min={bar1} max="256" step="1" /></label
-		></div>
+		<div style="display: flex">
+			<label for="bar1"
+				><div style="padding: 2px;height:2em; width:2.5em; background-color:black; color:white ">
+					{bar1}
+				</div>
+				<input class="sliders" bind:value={bar1} type="range" min="0" max={bar2} step="1" /></label
+			>
+			<label for="bar2"
+				><div
+					style="padding: 2px;height:2em; width:2.5em; background-color:{hexColor}; color:white "
+					on:click={changeColor}
+				>
+					{bar2}
+				</div>
+				<input
+					class="sliders"
+					bind:value={bar2}
+					type="range"
+					min={bar1}
+					max="256"
+					step="1"
+				/></label
+			>
+		</div>
 	</section>
 </main>
 
