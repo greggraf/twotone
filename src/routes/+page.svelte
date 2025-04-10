@@ -1,5 +1,7 @@
 <script>
+	import { onMount } from 'svelte';
 	import '../app.scss';
+
 	let fill = 'black';
 	let bar1 = 150;
 	let bar2 = 200;
@@ -18,10 +20,9 @@
 	let hexColor = rgbToHex(thirdcolors[colorChoice]);
 
 	function changeColor() {
-        console.log(thirdcolors[colorChoice]);
-		colorChoice = colorChoice >= thirdcolors.length ? 0 : colorChoice + 1;
+		colorChoice = colorChoice + 1 >= thirdcolors.length ? 0 : colorChoice + 1;
 		hexColor = rgbToHex(thirdcolors[colorChoice]);
-}
+	}
 
 	function rgbToHex(rgb) {
 		return `#${rgb[0].toString(16).padStart(2, '0')}${rgb[1].toString(16).padStart(2, '0')}${rgb[2].toString(16).padStart(2, '0')}`;
@@ -58,15 +59,39 @@
 	];
 
 	const newhistogram = scaleValues(histogram);
-	console.log(newhistogram);
+
+	
+	onMount(() => {
+		const image = new Image();
+
+		image.onload = function () {
+			const canvas = document.getElementById('outputCanvas');
+			canvas.ctx = canvas.getContext('2d');
+			canvas.height = image.height;
+			canvas.width = image.width;
+			canvas.ctx.drawImage(image, 0, 0);
+		};
+
+		const input = document.getElementById('input');
+
+		input.addEventListener('change', function () {
+			var reader = new FileReader();
+
+			reader.addEventListener('loadend', function (arg) {
+				image.src = this.result;
+			});
+
+			reader.readAsDataURL(this.files[0]);
+		});
+	});
 </script>
 
 <main>
 	<h1>Toner</h1>
 
-	<input type="file" accept="image/*" capture="user" />
+	<input type="file" accept="image/*" capture="user" id="input" />
 	<section>
-		<canvas width="120" height="120" style="border: 1px solid black">
+		<canvas width="120" height="120" style="border: 1px solid black" id="outputCanvas">
 			this will be the image.
 		</canvas>
 	</section>
