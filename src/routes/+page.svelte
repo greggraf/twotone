@@ -20,7 +20,7 @@
 	let hexColor = rgbToHex(thirdcolors[colorChoice]);
 
 	function changeColor() {
-		colorChoice = colorChoice + 1 >= thirdcolors.length ? 0 : colorChoice + 1;
+		colorChoice = colorChoice +1 >= thirdcolors.length ? 0 : colorChoice + 1;
 		hexColor = rgbToHex(thirdcolors[colorChoice]);
 	}
 
