@@ -1,38 +1,20 @@
-# sv
+# Two Tone
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Take an image and make it greyscale, then add a third color for highlight
 
-## Creating a project
+## To Do
 
-If you're seeing this, you've probably already done this step. Congrats!
+Put these in order
 
-```bash
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- Figure out testing - read svelte docs
+- Make clicking on the image toggle a large version and a small version
+- Make the mobile layout
+- Make CSS not styles - maybe as part of creating components
+- create comonpents for
+  - histogram
+  - image upload stuff
+  - maybe the sliders - or the slider with the color changer
+- is there a reason that the image takes so long to load some times
+- is there a memory leak?
+- configure the build situation and deploy
+- test on an actual phone
