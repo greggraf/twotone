@@ -112,13 +112,13 @@
 		image.src = logo;
 
 		image.onload = function () {
-			canvasWidth = image.width;
-			canvasHeight = image.height;
+			canvasWidth = image.width < 900? image.width: 900;
+			canvasHeight = image.height * (canvasWidth / image.width);
 			console.log('canvasWidth', canvasWidth);
 			ctx = canvas.getContext('2d');
 			canvas.height = canvasHeight;
 			canvas.width = canvasWidth;
-			ctx.drawImage(image, 0, 0);
+			ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
 			const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
 
 			greyscaleImagedata = makeGreyscale(Uint8ClampedArray.from(imageData.data));
@@ -151,7 +151,7 @@
 				bind:this={canvas}
 				width="120"
 				height="120"
-				style="border: 1px solid black"
+				style="border: 1px solid black; max-width: 800px; width: 100%"
 				id="outputCanvas"
 			>
 				this will be the image.
