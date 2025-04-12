@@ -1,11 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import '../app.scss';
-
-	let fill = 'black';
-	let bar1 = 150;
-	let bar2 = 200;
-	let colorChoice = 0;
+	import logo from '$lib/assets/crw_7086c_std.jpg';
 
 	const thirdcolors = [
 		[255, 204, 204],
@@ -17,20 +13,60 @@
 		[204, 180, 20]
 	];
 
-	let hexColor = rgbToHex(thirdcolors[colorChoice]);
+	/**
+	 * @type {HTMLInputElement}
+	 */
+	let fileInput;
+
+	/**
+	 * @type {HTMLCanvasElement}
+	 */
+	let canvas;
+	
+	/**
+	 * @type {CanvasRenderingContext2D}
+	 */
+	let ctx;
+
+	let canvasWidth = $state(0);
+	let canvasHeight = $state(0);
+
+	let histogram = $state(new Array(256).fill(0));
+	let newhistogram = $derived(scaleValues(histogram));
+	let fill = $state('black');
+	let blackpoint = $state(78);
+	let whitepoint = $state(110);
+	let colorChoice = $state(0);
+	let hexColor = $derived(rgbToHex(thirdcolors[colorChoice]));
+	let greyscaleImagedata = $state([]);
+
+	$effect(() => {
+		if (greyscaleImagedata.length === 0) {
+			return;
+		}
+
+		const reducedColorImagedata = makeFewColors(
+			Uint8ClampedArray.from(greyscaleImagedata),
+			blackpoint,
+			whitepoint,
+			thirdcolors[colorChoice]
+		);
+
+		const newImageData = new ImageData(
+			new Uint8ClampedArray(reducedColorImagedata),
+			canvasWidth,
+			canvasHeight
+		);
+		ctx.putImageData(newImageData, 0, 0);
+	});
 
 	function changeColor() {
-		colorChoice = colorChoice +1 >= thirdcolors.length ? 0 : colorChoice + 1;
-		hexColor = rgbToHex(thirdcolors[colorChoice]);
+		colorChoice = colorChoice + 1 >= thirdcolors.length ? 0 : colorChoice + 1;
 	}
 
 	function rgbToHex(rgb) {
 		return `#${rgb[0].toString(16).padStart(2, '0')}${rgb[1].toString(16).padStart(2, '0')}${rgb[2].toString(16).padStart(2, '0')}`;
 	}
-
-	const changeFill = () => {
-		fill = 'red';
-	};
 
 	function scaleValue(value, max) {
 		return Math.floor((value / max) * 255);
@@ -41,40 +77,59 @@
 		return numbers.map((value) => scaleValue(value, max));
 	}
 
-	const histogram = [
-		233, 381, 313, 271, 244, 240, 254, 283, 235, 247, 249, 244, 220, 225, 238, 214, 254, 208, 251,
-		248, 257, 274, 269, 250, 257, 255, 271, 235, 270, 285, 288, 276, 295, 321, 309, 310, 331, 373,
-		364, 407, 384, 409, 443, 444, 486, 510, 466, 532, 510, 524, 565, 585, 614, 593, 641, 610, 619,
-		595, 666, 660, 674, 679, 664, 713, 697, 708, 729, 727, 748, 824, 759, 831, 773, 829, 790, 857,
-		842, 927, 874, 909, 863, 811, 823, 835, 803, 824, 868, 918, 899, 928, 934, 946, 987, 994, 1005,
-		1018, 1052, 979, 1005, 939, 1016, 862, 864, 899, 833, 888, 928, 866, 898, 816, 794, 802, 754,
-		803, 879, 900, 940, 978, 976, 913, 880, 857, 800, 735, 727, 701, 662, 684, 655, 595, 567, 559,
-		573, 573, 571, 524, 532, 468, 481, 469, 474, 500, 494, 475, 492, 487, 491, 498, 522, 490, 481,
-		523, 491, 516, 569, 607, 557, 581, 611, 616, 650, 589, 599, 617, 676, 696, 723, 742, 819, 799,
-		851, 800, 894, 938, 996, 1009, 974, 943, 999, 952, 903, 830, 863, 849, 806, 763, 722, 598, 673,
-		590, 626, 466, 454, 445, 434, 345, 396, 339, 331, 315, 247, 274, 247, 247, 220, 226, 224, 223,
-		171, 172, 172, 156, 174, 151, 157, 133, 133, 134, 127, 125, 120, 109, 118, 95, 85, 93, 102, 80,
-		100, 80, 111, 92, 97, 83, 93, 86, 69, 86, 84, 85, 89, 89, 86, 86, 102, 113, 115, 120, 125, 128,
-		163, 195, 265, 498, 1053, 1691
-	];
+	export function makeGreyscale(data) {
+		for (let i = 0; i < data.length; i += 4) {
+			const grayscale = 0.21 * data[i] + 0.72 * data[i + 1] + 0.07 * data[i + 2];
+			data[i] = grayscale;
+			data[i + 1] = grayscale;
+			data[i + 2] = grayscale;
+		}
+		return data;
+	}
 
-	const newhistogram = scaleValues(histogram);
+	export function makeFewColors(data, black = 62, white = 170, thirdcolor = [204, 190, 255]) {
+		for (let i = 0; i < data.length; i += 4) {
+			if (data[i] > white) {
+				data[i] = 255;
+				data[i + 1] = 255;
+				data[i + 2] = 255;
+			} else if (data[i] > black && data[i] < white) {
+				data[i] = thirdcolor[0];
+				data[i + 1] = thirdcolor[1];
+				data[i + 2] = thirdcolor[2];
+			} else {
+				data[i] = 0;
+				data[i + 1] = 0;
+				data[i + 2] = 0;
+			}
+		}
 
-	
+		return data;
+	}
+
 	onMount(() => {
 		const image = new Image();
+		image.src = logo;
 
 		image.onload = function () {
-			const canvas = document.getElementById('outputCanvas');
-			canvas.ctx = canvas.getContext('2d');
-			canvas.height = image.height;
-			canvas.width = image.width;
-			canvas.ctx.drawImage(image, 0, 0);
+			canvasWidth = image.width;
+			canvasHeight = image.height;
+			console.log('canvasWidth', canvasWidth);
+			ctx = canvas.getContext('2d');
+			canvas.height = canvasHeight;
+			canvas.width = canvasWidth;
+			ctx.drawImage(image, 0, 0);
+			const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+
+			greyscaleImagedata = makeGreyscale(Uint8ClampedArray.from(imageData.data));
+
+			for (let i = 0; i < greyscaleImagedata.length; i += 4) {
+				const grayscale = greyscaleImagedata[i];
+				histogram[grayscale]++;
+			}
 		};
 
-		const input = document.getElementById('input');
-
-		input.addEventListener('change', function () {
+		fileInput.addEventListener('change', function () {
 			var reader = new FileReader();
 
 			reader.addEventListener('loadend', function (arg) {
@@ -89,79 +144,94 @@
 <main>
 	<h1>Toner</h1>
 
-	<input type="file" accept="image/*" capture="user" id="input" />
-	<section>
-		<canvas width="120" height="120" style="border: 1px solid black" id="outputCanvas">
-			this will be the image.
-		</canvas>
-	</section>
-	<section style="display: flex">
-		<svg
-			width="256"
-			height="256"
-			style="border: 1px solid black; box-sizing: content-box; margin: 1em; background-color: #eee"
-		>
-			<g style="isolatation: isolate">
-				<g {fill} on:click={changeFill}>
-					{#each newhistogram as bar, i}
-						<rect x={i * 1} y={256 - bar} width="1" height={bar} />
-					{/each}
-				</g>
-				<g fill="black">
-					<rect
-						x="0"
-						y="0"
-						width={bar1}
-						height="256"
-						fill="black"
-						style="mix-blend-mode: multiply; opacity: .5"
-					/>
-				</g>
-				<g fill={hexColor}>
-					<rect
-						x={bar1}
-						y="0"
-						width={bar2 - bar1}
-						height="256"
-						style="mix-blend-mode: multiply; opacity: .5"
-					/>
-				</g>
-				<g fill="#fff">
-					<rect
-						x={bar2}
-						y="0"
-						width={256 - bar2}
-						height="256"
-						style="mix-blend-mode: multiply; opacity: .5"
-					/>
-				</g>
-			</g>
-		</svg>
-		<div style="display: flex">
-			<label for="bar1"
-				><div style="padding: 2px;height:2em; width:2.5em; background-color:black; color:white ">
-					{bar1}
-				</div>
-				<input class="sliders" bind:value={bar1} type="range" min="0" max={bar2} step="1" /></label
+	<input bind:this={fileInput} type="file" accept="image/*" capture="user" id="input" />
+	<div style="display: flex">
+		<section>
+			<canvas
+				bind:this={canvas}
+				width="120"
+				height="120"
+				style="border: 1px solid black"
+				id="outputCanvas"
 			>
-			<label for="bar2"
-				><div
-					style="padding: 2px;height:2em; width:2.5em; background-color:{hexColor}; color:white "
-					on:click={changeColor}
+				this will be the image.
+			</canvas>
+		</section>
+		<section style="display: flex">
+			<svg
+				width="256"
+				height="256"
+				style="border: 1px solid black; box-sizing: content-box; margin: 1em; background-color: #eee"
+			>
+				<g style="isolatation: isolate">
+					<g {fill}>
+						{#each newhistogram as bar, i}
+							<rect x={i * 1} y={256 - bar} width="1" height={bar} />
+						{/each}
+					</g>
+					<g fill="black">
+						<rect
+							x="0"
+							y="0"
+							width={blackpoint}
+							height="256"
+							fill="black"
+							style="mix-blend-mode: multiply; opacity: .5"
+						/>
+					</g>
+					<g fill={hexColor}>
+						<rect
+							x={blackpoint}
+							y="0"
+							width={whitepoint - blackpoint}
+							height="256"
+							style="mix-blend-mode: multiply; opacity: .5"
+						/>
+					</g>
+					<g fill="#fff">
+						<rect
+							x={whitepoint}
+							y="0"
+							width={256 - whitepoint}
+							height="256"
+							style="mix-blend-mode: multiply; opacity: .5"
+						/>
+					</g>
+				</g>
+			</svg>
+			<div style="display: flex">
+				<label for="blackpoint"
+					><div style="padding: 2px;height:2em; width:2.5em; background-color:black; color:white ">
+						{blackpoint}
+					</div>
+					<input
+						class="sliders"
+						bind:value={blackpoint}
+						type="range"
+						min="0"
+						max={whitepoint}
+						step="1"
+					/></label
 				>
-					{bar2}
-				</div>
-				<input
-					class="sliders"
-					bind:value={bar2}
-					type="range"
-					min={bar1}
-					max="256"
-					step="1"
-				/></label
-			>
-		</div>
-	</section>
+				<label for="whitepoint"
+					><div
+						style="padding: 2px;height:2em; width:2.5em; background-color:{hexColor}; color:white "
+						on:click={changeColor}
+					>
+						{whitepoint}
+					</div>
+					<input
+						class="sliders"
+						bind:value={whitepoint}
+						type="range"
+						min={blackpoint}
+						max="256"
+						step="1"
+					/></label
+				>
+			</div>
+		</section>
+	</div>
 </main>
 
 <style>
