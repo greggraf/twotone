@@ -22,7 +22,7 @@
 	 * @type {HTMLCanvasElement}
 	 */
 	let canvas;
-	
+
 	/**
 	 * @type {CanvasRenderingContext2D}
 	 */
@@ -39,11 +39,14 @@
 	let colorChoice = $state(0);
 	let hexColor = $derived(rgbToHex(thirdcolors[colorChoice]));
 	let greyscaleImagedata = $state([]);
+	let waitingForGreyscale = $derived(greyscaleImagedata.length === 0);
 
 	$effect(() => {
-		if (greyscaleImagedata.length === 0) {
+		if (waitingForGreyscale) {
 			return;
 		}
+
+		console.time('reducedColorImagedata');
 
 		const reducedColorImagedata = makeFewColors(
 			Uint8ClampedArray.from(greyscaleImagedata),
@@ -51,13 +54,21 @@
 			whitepoint,
 			thirdcolors[colorChoice]
 		);
+		console.timeEnd('reducedColorImagedata');
+
+		console.time('extract new datat');
 
 		const newImageData = new ImageData(
 			new Uint8ClampedArray(reducedColorImagedata),
 			canvasWidth,
 			canvasHeight
 		);
+
+		console.timeEnd('extract new datat');
+
+		console.time('put image on canvas');
 		ctx.putImageData(newImageData, 0, 0);
+		console.timeEnd('put image on canvas');
 	});
 
 	function changeColor() {
@@ -112,7 +123,8 @@
 		image.src = logo;
 
 		image.onload = function () {
-			canvasWidth = image.width < 900? image.width: 900;
+			console.time('image load event');
+			canvasWidth = image.width < 900 ? image.width : 900;
 			canvasHeight = image.height * (canvasWidth / image.width);
 			console.log('canvasWidth', canvasWidth);
 			ctx = canvas.getContext('2d');
@@ -120,9 +132,11 @@
 			canvas.width = canvasWidth;
 			ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
 			const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+			console.timeEnd('image load event');
+			console.time('create grey scale');
 
 			greyscaleImagedata = makeGreyscale(Uint8ClampedArray.from(imageData.data));
-
+			console.timeEnd('create grey scale');
 			for (let i = 0; i < greyscaleImagedata.length; i += 4) {
 				const grayscale = greyscaleImagedata[i];
 				histogram[grayscale]++;
@@ -135,8 +149,9 @@
 			reader.addEventListener('loadend', function (arg) {
 				image.src = this.result;
 			});
-
+			console.time('reading');
 			reader.readAsDataURL(this.files[0]);
+			console.timeEnd('reading');
 		});
 	});
 </script>
@@ -158,47 +173,50 @@
 			</canvas>
 		</section>
 		<section style="display: flex">
-			<svg
-				width="256"
-				height="256"
-				style="border: 1px solid black; box-sizing: content-box; margin: 1em; background-color: #eee"
-			>
-				<g style="isolatation: isolate">
-					<g {fill}>
-						{#each newhistogram as bar, i}
-							<rect x={i * 1} y={256 - bar} width="1" height={bar} />
-						{/each}
+			{#if !waitingForGreyscale}
+				<svg
+					width="256"
+					height="256"
+					style="border: 1px solid black; box-sizing: content-box; margin: 1em; background-color: #eee"
+				>
+					<g style="isolatation: isolate">
+						<g {fill}>
+							{#each newhistogram as bar, i}
+								{console.log(bar)}
+								<rect x={i * 1} y={256} width="1" height={1} />
+							{/each}
+						</g>
+						<g fill="black">
+							<rect
+								x="0"
+								y="0"
+								width={blackpoint}
+								height="256"
+								fill="black"
+								style="mix-blend-mode: multiply; opacity: .5"
+							/>
+						</g>
+						<g fill={hexColor}>
+							<rect
+								x={blackpoint}
+								y="0"
+								width={whitepoint - blackpoint}
+								height="256"
+								style="mix-blend-mode: multiply; opacity: .5"
+							/>
+						</g>
+						<g fill="#fff">
+							<rect
+								x={whitepoint}
+								y="0"
+								width={256 - whitepoint}
+								height="256"
+								style="mix-blend-mode: multiply; opacity: .5"
+							/>
+						</g>
 					</g>
-					<g fill="black">
-						<rect
-							x="0"
-							y="0"
-							width={blackpoint}
-							height="256"
-							fill="black"
-							style="mix-blend-mode: multiply; opacity: .5"
-						/>
-					</g>
-					<g fill={hexColor}>
-						<rect
-							x={blackpoint}
-							y="0"
-							width={whitepoint - blackpoint}
-							height="256"
-							style="mix-blend-mode: multiply; opacity: .5"
-						/>
-					</g>
-					<g fill="#fff">
-						<rect
-							x={whitepoint}
-							y="0"
-							width={256 - whitepoint}
-							height="256"
-							style="mix-blend-mode: multiply; opacity: .5"
-						/>
-					</g>
-				</g>
-			</svg>
+				</svg>
+			{/if}
 			<div style="display: flex">
 				<label for="blackpoint"
 					><div style="padding: 2px;height:2em; width:2.5em; background-color:black; color:white ">
