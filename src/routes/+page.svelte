@@ -49,6 +49,7 @@
 		}
 
 		console.time('reducedColorImagedata');
+		console.log("greyscaleImagedata",greyscaleImagedata.length)
 
 		const reducedColorImagedata = makeFewColors(
 			Uint8ClampedArray.from(greyscaleImagedata),
@@ -59,7 +60,7 @@
 		console.timeEnd('reducedColorImagedata');
 
 		console.time('extract new data');
-
+console.log("foo",reducedColorImagedata.length)
 		const newImageData = new ImageData(
 			new Uint8ClampedArray(reducedColorImagedata),
 			canvasWidth,
@@ -101,6 +102,7 @@
 	}
 
 	export function makeFewColors(data, black = 62, white = 170, thirdcolor = [204, 190, 255]) {
+		console.log(BarProp, data.length)
 		for (let i = 0; i < data.length; i += 4) {
 			if (data[i] > white) {
 				data[i] = 255;
