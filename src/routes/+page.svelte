@@ -1,8 +1,10 @@
 <script>
 	import { onMount } from 'svelte';
 	import '../app.scss';
-	import logo from '$lib/assets/crw_7086c_std.jpg';
+	import logo from '$lib/assets/IMG_0608small.jpeg';
 
+	let { _greyscaleImageData = []} = $props();
+	
 	const thirdcolors = [
 		[255, 204, 204],
 		[100, 230, 20],
@@ -38,7 +40,7 @@
 	let whitepoint = $state(110);
 	let colorChoice = $state(0);
 	let hexColor = $derived(rgbToHex(thirdcolors[colorChoice]));
-	let greyscaleImagedata = $state([]);
+	let greyscaleImagedata = $state(_greyscaleImageData);
 	let waitingForGreyscale = $derived(greyscaleImagedata.length === 0);
 
 	$effect(() => {
@@ -133,14 +135,19 @@
 			ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
 			const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
 			console.timeEnd('image load event');
+			
 			console.time('create grey scale');
-
 			greyscaleImagedata = makeGreyscale(Uint8ClampedArray.from(imageData.data));
 			console.timeEnd('create grey scale');
+
+			console.log('greyscaleImagedata', greyscaleImagedata)
+
 			for (let i = 0; i < greyscaleImagedata.length; i += 4) {
 				const grayscale = greyscaleImagedata[i];
 				histogram[grayscale]++;
 			}
+			console.log('greyscahistogramleImagedata', histogram)
+
 		};
 
 		fileInput.addEventListener('change', function () {
@@ -154,6 +161,8 @@
 			console.timeEnd('reading');
 		});
 	});
+
+
 </script>
 
 <main>
@@ -182,8 +191,7 @@
 					<g style="isolatation: isolate">
 						<g {fill}>
 							{#each newhistogram as bar, i}
-								{console.log(bar)}
-								<rect x={i * 1} y={256} width="1" height={1} />
+								<rect x={i * 1} y={256 - bar} width="1" height={bar} />
 							{/each}
 						</g>
 						<g fill="black">
