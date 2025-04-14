@@ -58,7 +58,7 @@
 		);
 		console.timeEnd('reducedColorImagedata');
 
-		console.time('extract new datat');
+		console.time('extract new data');
 
 		const newImageData = new ImageData(
 			new Uint8ClampedArray(reducedColorImagedata),
@@ -66,7 +66,7 @@
 			canvasHeight
 		);
 
-		console.timeEnd('extract new datat');
+		console.timeEnd('extract new data');
 
 		console.time('put image on canvas');
 		ctx.putImageData(newImageData, 0, 0);
