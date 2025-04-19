@@ -1,9 +1,9 @@
 <script>
 	import { onMount } from 'svelte';
 	import '../app.scss';
+	import Histogram from '$lib/Histogram.svelte';
 	import logo from '$lib/assets/IMG_0608small.jpeg';
 
-	let { _greyscaleImageData = []} = $props();
 	
 	const thirdcolors = [
 		[255, 204, 204],
@@ -40,7 +40,7 @@
 	let whitepoint = $state(110);
 	let colorChoice = $state(0);
 	let hexColor = $derived(rgbToHex(thirdcolors[colorChoice]));
-	let greyscaleImagedata = $state(_greyscaleImageData);
+	let greyscaleImagedata = $state([]);
 	let waitingForGreyscale = $derived(greyscaleImagedata.length === 0);
 
 	$effect(() => {
@@ -227,6 +227,7 @@ console.log("foo",reducedColorImagedata.length)
 					</g>
 				</svg>
 			{/if}
+
 			<div style="display: flex">
 				<label for="blackpoint"
 					><div style="padding: 2px;height:2em; width:2.5em; background-color:black; color:white ">
@@ -259,6 +260,8 @@ console.log("foo",reducedColorImagedata.length)
 				>
 			</div>
 		</section>
+		<Histogram greyscaleImageData={greyscaleImagedata} blackpoint={blackpoint} whitepoint={whitepoint} hexColor={hexColor} />	
+
 	</div>
 </main>
 
