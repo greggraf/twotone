@@ -16,7 +16,6 @@
 		ctx = canvas.getContext('2d');
 	});
 	$effect(() => {
-		$inspect(imageData);
 		if (imageData.length > 0) {
 			const foo = new Uint8ClampedArray(imageData);
 			const newImageData = new ImageData(foo, width, height);
