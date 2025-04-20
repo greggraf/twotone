@@ -3,6 +3,7 @@
 	import '../app.scss';
 	import logo from '$lib/assets/IMG_0608small.jpeg';
 	import Histogram from '$lib/Histogram.svelte';
+	import ProcessedImage from '$lib/ProcessedImage.svelte';
 
 	let { _greyscaleImageData = [] } = $props();
 
@@ -21,16 +22,6 @@
 	 */
 	let fileInput;
 
-	/**
-	 * @type {HTMLCanvasElement}
-	 */
-	let canvas;
-
-	/**
-	 * @type {CanvasRenderingContext2D}
-	 */
-	let ctx;
-
 	let canvasWidth = $state(0);
 	let canvasHeight = $state(0);
 
@@ -40,34 +31,21 @@
 	let hexColor = $derived(rgbToHex(thirdcolors[colorChoice]));
 	let greyscaleImagedata = $state.raw(_greyscaleImageData);
 	let waitingForGreyscale = $derived(greyscaleImagedata.length === 0);
+	let reducedColorImagedata = $state.raw([]);
 
 	$effect(() => {
 		if (waitingForGreyscale) {
 			return;
 		}
-
 		console.time('reducedColorImagedata');
 
-		const reducedColorImagedata = makeFewColors(
+		reducedColorImagedata = makeFewColors(
 			Uint8ClampedArray.from(greyscaleImagedata),
 			blackpoint,
 			whitepoint,
 			thirdcolors[colorChoice]
 		);
 		console.timeEnd('reducedColorImagedata');
-
-		console.time('extract new data');
-		const newImageData = new ImageData(
-			new Uint8ClampedArray(reducedColorImagedata),
-			canvasWidth,
-			canvasHeight
-		);
-
-		console.timeEnd('extract new data');
-
-		console.time('put image on canvas');
-		ctx.putImageData(newImageData, 0, 0);
-		console.timeEnd('put image on canvas');
 	});
 
 	function changeColor() {
@@ -113,22 +91,34 @@
 		image.src = logo;
 
 		image.onload = function () {
+			const grayscaleCanvas = document.createElement('canvas');
+
 			console.time('image load event');
 			canvasWidth = image.width < 900 ? image.width : 900;
 			canvasHeight = image.height * (canvasWidth / image.width);
-			ctx = canvas.getContext('2d');
-			canvas.height = canvasHeight;
-			canvas.width = canvasWidth;
-			ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
-			const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+			grayscaleCanvas.height = canvasHeight;
+			grayscaleCanvas.width = canvasWidth;
+
+			const foo = grayscaleCanvas.getContext('2d');
+
+			foo.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+			const imageData = foo.getImageData(0, 0, canvasWidth, canvasHeight);
 			console.timeEnd('image load event');
 
 			console.time('create grey scale');
-			console.log('grg');
 			greyscaleImagedata = makeGreyscale(Uint8ClampedArray.from(imageData.data));
 			console.timeEnd('create grey scale');
 
-			console.log('greyscaleImagedata', greyscaleImagedata);
+
+			console.time('reducedColorImagedata');
+
+			reducedColorImagedata = makeFewColors(
+				Uint8ClampedArray.from(greyscaleImagedata),
+				blackpoint,
+				whitepoint,
+				thirdcolors[colorChoice]
+			);
+			console.timeEnd('reducedColorImagedata');
 		};
 
 		fileInput.addEventListener('change', function () {
@@ -150,15 +140,7 @@
 	<input bind:this={fileInput} type="file" accept="image/*" capture="user" id="input" />
 	<div style="display: flex">
 		<section>
-			<canvas
-				bind:this={canvas}
-				width="120"
-				height="120"
-				style="border: 1px solid black; max-width: 800px; width: 100%"
-				id="outputCanvas"
-			>
-				this will be the image.
-			</canvas>
+			<ProcessedImage imageData={reducedColorImagedata} width={canvasWidth} height={canvasHeight} />
 		</section>
 		<section style="display: flex">
 			<Histogram greyscaleImageData={greyscaleImagedata} {blackpoint} {whitepoint} {hexColor} />
