@@ -2,9 +2,10 @@
 	import { onMount } from 'svelte';
 	import '../app.scss';
 	import logo from '$lib/assets/IMG_0608small.jpeg';
+	import Histogram from '$lib/Histogram.svelte';
 
-	let { _greyscaleImageData = []} = $props();
-	
+	let { _greyscaleImageData = [] } = $props();
+
 	const thirdcolors = [
 		[255, 204, 204],
 		[100, 230, 20],
@@ -33,14 +34,11 @@
 	let canvasWidth = $state(0);
 	let canvasHeight = $state(0);
 
-	let histogram = $state(new Array(256).fill(0));
-	let newhistogram = $derived(scaleValues(histogram));
-	let fill = $state('black');
 	let blackpoint = $state(78);
 	let whitepoint = $state(110);
 	let colorChoice = $state(0);
 	let hexColor = $derived(rgbToHex(thirdcolors[colorChoice]));
-	let greyscaleImagedata = $state(_greyscaleImageData);
+	let greyscaleImagedata = $state.raw(_greyscaleImageData);
 	let waitingForGreyscale = $derived(greyscaleImagedata.length === 0);
 
 	$effect(() => {
@@ -49,7 +47,6 @@
 		}
 
 		console.time('reducedColorImagedata');
-		console.log("greyscaleImagedata",greyscaleImagedata.length)
 
 		const reducedColorImagedata = makeFewColors(
 			Uint8ClampedArray.from(greyscaleImagedata),
@@ -60,7 +57,6 @@
 		console.timeEnd('reducedColorImagedata');
 
 		console.time('extract new data');
-console.log("foo",reducedColorImagedata.length)
 		const newImageData = new ImageData(
 			new Uint8ClampedArray(reducedColorImagedata),
 			canvasWidth,
@@ -82,15 +78,6 @@ console.log("foo",reducedColorImagedata.length)
 		return `#${rgb[0].toString(16).padStart(2, '0')}${rgb[1].toString(16).padStart(2, '0')}${rgb[2].toString(16).padStart(2, '0')}`;
 	}
 
-	function scaleValue(value, max) {
-		return Math.floor((value / max) * 255);
-	}
-
-	function scaleValues(numbers) {
-		const max = Math.max(...numbers);
-		return numbers.map((value) => scaleValue(value, max));
-	}
-
 	export function makeGreyscale(data) {
 		for (let i = 0; i < data.length; i += 4) {
 			const grayscale = 0.21 * data[i] + 0.72 * data[i + 1] + 0.07 * data[i + 2];
@@ -102,7 +89,6 @@ console.log("foo",reducedColorImagedata.length)
 	}
 
 	export function makeFewColors(data, black = 62, white = 170, thirdcolor = [204, 190, 255]) {
-		console.log(BarProp, data.length)
 		for (let i = 0; i < data.length; i += 4) {
 			if (data[i] > white) {
 				data[i] = 255;
@@ -130,26 +116,19 @@ console.log("foo",reducedColorImagedata.length)
 			console.time('image load event');
 			canvasWidth = image.width < 900 ? image.width : 900;
 			canvasHeight = image.height * (canvasWidth / image.width);
-			console.log('canvasWidth', canvasWidth);
 			ctx = canvas.getContext('2d');
 			canvas.height = canvasHeight;
 			canvas.width = canvasWidth;
 			ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
 			const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
 			console.timeEnd('image load event');
-			
+
 			console.time('create grey scale');
+			console.log('grg');
 			greyscaleImagedata = makeGreyscale(Uint8ClampedArray.from(imageData.data));
 			console.timeEnd('create grey scale');
 
-			console.log('greyscaleImagedata', greyscaleImagedata)
-
-			for (let i = 0; i < greyscaleImagedata.length; i += 4) {
-				const grayscale = greyscaleImagedata[i];
-				histogram[grayscale]++;
-			}
-			console.log('greyscahistogramleImagedata', histogram)
-
+			console.log('greyscaleImagedata', greyscaleImagedata);
 		};
 
 		fileInput.addEventListener('change', function () {
@@ -163,8 +142,6 @@ console.log("foo",reducedColorImagedata.length)
 			console.timeEnd('reading');
 		});
 	});
-
-
 </script>
 
 <main>
@@ -184,49 +161,8 @@ console.log("foo",reducedColorImagedata.length)
 			</canvas>
 		</section>
 		<section style="display: flex">
-			{#if !waitingForGreyscale}
-				<svg
-					width="256"
-					height="256"
-					style="border: 1px solid black; box-sizing: content-box; margin: 1em; background-color: #eee"
-				>
-					<g style="isolatation: isolate">
-						<g {fill}>
-							{#each newhistogram as bar, i}
-								<rect x={i * 1} y={256 - bar} width="1" height={bar} />
-							{/each}
-						</g>
-						<g fill="black">
-							<rect
-								x="0"
-								y="0"
-								width={blackpoint}
-								height="256"
-								fill="black"
-								style="mix-blend-mode: multiply; opacity: .5"
-							/>
-						</g>
-						<g fill={hexColor}>
-							<rect
-								x={blackpoint}
-								y="0"
-								width={whitepoint - blackpoint}
-								height="256"
-								style="mix-blend-mode: multiply; opacity: .5"
-							/>
-						</g>
-						<g fill="#fff">
-							<rect
-								x={whitepoint}
-								y="0"
-								width={256 - whitepoint}
-								height="256"
-								style="mix-blend-mode: multiply; opacity: .5"
-							/>
-						</g>
-					</g>
-				</svg>
-			{/if}
+			<Histogram greyscaleImageData={greyscaleImagedata} {blackpoint} {whitepoint} {hexColor} />
+
 			<div style="display: flex">
 				<label for="blackpoint"
 					><div style="padding: 2px;height:2em; width:2.5em; background-color:black; color:white ">
