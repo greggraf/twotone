@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import logo from '$lib/assets/IMG_0608small.jpeg';
 
-	let { source = $bindable(),  } = $props();
+    let { imageLoaded } = $props();
 
 	/**
 	 * @type {HTMLInputElement}
@@ -11,13 +11,17 @@
 
 	onMount(() => {
 		const image = new Image();
+		image.onload = () => imageLoaded(image);
+
 		image.src = logo;
+
 
 		fileInput.addEventListener('change', function () {
 			var reader = new FileReader();
 
 			reader.addEventListener('loadend', function (arg) {
 				image.src = this.result;
+				imageLoaded(image);
 			});
 			console.time('reading');
 			reader.readAsDataURL(this.files[0]);

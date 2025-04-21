@@ -1,12 +1,9 @@
 <script>
-	import { onMount } from 'svelte';
 	import '../app.scss';
-	import logo from '$lib/assets/IMG_0608small.jpeg';
 	import Histogram from '$lib/Histogram.svelte';
 	import ProcessedImage from '$lib/ProcessedImage.svelte';
 	import ImageUpload from '$lib/ImageUpload.svelte';
-
-	let { _greyscaleImageData = [] } = $props();
+	import { derived } from 'svelte/store';
 
 	const thirdcolors = [
 		[255, 204, 204],
@@ -18,36 +15,30 @@
 		[204, 180, 20]
 	];
 
-	/**
-	 * @type {HTMLInputElement}
-	 */
-	let fileInput;
-
-	let canvasWidth = $state(0);
-	let canvasHeight = $state(0);
-
+	let canvasWidth = $state(120);
+	let canvasHeight = $state(120);
 	let blackpoint = $state(78);
 	let whitepoint = $state(110);
 	let colorChoice = $state(0);
-	let hexColor = $derived(rgbToHex(thirdcolors[colorChoice]));
-	let greyscaleImagedata = $state.raw(_greyscaleImageData);
-	let waitingForGreyscale = $derived(greyscaleImagedata.length === 0);
-	let reducedColorImagedata = $state.raw([]);
 
-	$effect(() => {
-		if (waitingForGreyscale) {
-			return;
-		}
+	let hexColor = $derived(rgbToHex(thirdcolors[colorChoice]));
+	/**
+	 * @type {string | Iterable<any>}
+	 */
+	let greyscaleImagedata = $state.raw([]);
+	
+	let reducedColorImagedata = $derived.by(() => {
 		console.time('reducedColorImagedata');
 
-		reducedColorImagedata = makeFewColors(
+		const _reducedColorImagedata = makeFewColors(
 			Uint8ClampedArray.from(greyscaleImagedata),
 			blackpoint,
 			whitepoint,
 			thirdcolors[colorChoice]
 		);
 		console.timeEnd('reducedColorImagedata');
-	});
+		return _reducedColorImagedata;});
+
 
 	function changeColor() {
 		colorChoice = colorChoice + 1 >= thirdcolors.length ? 0 : colorChoice + 1;
@@ -57,7 +48,7 @@
 		return `#${rgb[0].toString(16).padStart(2, '0')}${rgb[1].toString(16).padStart(2, '0')}${rgb[2].toString(16).padStart(2, '0')}`;
 	}
 
-	export function makeGreyscale(data) {
+	export function transformToGreyscale(data) {
 		for (let i = 0; i < data.length; i += 4) {
 			const grayscale = 0.21 * data[i] + 0.72 * data[i + 1] + 0.07 * data[i + 2];
 			data[i] = grayscale;
@@ -87,61 +78,36 @@
 		return data;
 	}
 
+	/**
+	 * @param {CanvasImageSource} image
+	 * @param {number} width
+	 * @param {number} height
+	 */
 	function getGreyscale(image, width, height) {
 		const grayscaleCanvas = document.createElement('canvas');
 		grayscaleCanvas.width = width;
 		grayscaleCanvas.height = height;
 		const context = grayscaleCanvas.getContext('2d');
-		context.drawImage(image, 0, 0, canvasWidth, canvasHeight);
-		const imageData = context.getImageData(0, 0, canvasWidth, canvasHeight);
-		console.timeEnd('image load event');
-
-		console.time('create grey scale');
-		const _greyscaleImagedata = makeGreyscale(Uint8ClampedArray.from(imageData.data));
-		console.timeEnd('create grey scale');
-		return _greyscaleImagedata;
+		if (context) {
+			context.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+			const imageData = context.getImageData(0, 0, canvasWidth, canvasHeight);
+			return transformToGreyscale(imageData.data);
+		}
 	}
 
-	function handleImageLoad() {
-		canvasWidth = this.width < 900 ? this.width : 900;
-		canvasHeight = this.height * (canvasWidth / this.width);
-
-		greyscaleImagedata = getGreyscale(this, canvasWidth, canvasHeight);
-
-		console.time('reducedColorImagedata');
-
-		reducedColorImagedata = makeFewColors(
-			Uint8ClampedArray.from(greyscaleImagedata),
-			blackpoint,
-			whitepoint,
-			thirdcolors[colorChoice]
-		);
-		console.timeEnd('reducedColorImagedata');
+	/**
+	 * @param {HTMLImageElement} image
+	 */
+	function handleImageLoad(image) {
+		canvasWidth = image.width < 900 ? image.width : 900;
+		canvasHeight = image.height * (canvasWidth / image.width);
+		greyscaleImagedata = getGreyscale(image, canvasWidth, canvasHeight);
 	}
-
-	onMount(() => {
-		const image = new Image();
-		image.src = logo;
-
-		image.onload = handleImageLoad;
-
-		fileInput.addEventListener('change', function () {
-			var reader = new FileReader();
-
-			reader.addEventListener('loadend', function (arg) {
-				image.src = this.result;
-			});
-			console.time('reading');
-			reader.readAsDataURL(this.files[0]);
-			console.timeEnd('reading');
-		});
-	});
 </script>
 
 <main>
 	<h1>Toner</h1>
-
-	<input bind:this={fileInput} type="file" accept="image/*" capture="user" id="input" />
+	<ImageUpload imageLoaded={handleImageLoad} />
 	<div style="display: flex">
 		<section>
 			<ProcessedImage imageData={reducedColorImagedata} width={canvasWidth} height={canvasHeight} />
