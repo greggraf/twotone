@@ -4,6 +4,7 @@
 	import logo from '$lib/assets/IMG_0608small.jpeg';
 	import Histogram from '$lib/Histogram.svelte';
 	import ProcessedImage from '$lib/ProcessedImage.svelte';
+	import ImageUpload from '$lib/ImageUpload.svelte';
 
 	let { _greyscaleImageData = [] } = $props();
 
@@ -86,40 +87,43 @@
 		return data;
 	}
 
+	function getGreyscale(image, width, height) {
+		const grayscaleCanvas = document.createElement('canvas');
+		grayscaleCanvas.width = width;
+		grayscaleCanvas.height = height;
+		const context = grayscaleCanvas.getContext('2d');
+		context.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+		const imageData = context.getImageData(0, 0, canvasWidth, canvasHeight);
+		console.timeEnd('image load event');
+
+		console.time('create grey scale');
+		const _greyscaleImagedata = makeGreyscale(Uint8ClampedArray.from(imageData.data));
+		console.timeEnd('create grey scale');
+		return _greyscaleImagedata;
+	}
+
+	function handleImageLoad() {
+		canvasWidth = this.width < 900 ? this.width : 900;
+		canvasHeight = this.height * (canvasWidth / this.width);
+
+		greyscaleImagedata = getGreyscale(this, canvasWidth, canvasHeight);
+
+		console.time('reducedColorImagedata');
+
+		reducedColorImagedata = makeFewColors(
+			Uint8ClampedArray.from(greyscaleImagedata),
+			blackpoint,
+			whitepoint,
+			thirdcolors[colorChoice]
+		);
+		console.timeEnd('reducedColorImagedata');
+	}
+
 	onMount(() => {
 		const image = new Image();
 		image.src = logo;
 
-		image.onload = function () {
-			const grayscaleCanvas = document.createElement('canvas');
-
-			console.time('image load event');
-			canvasWidth = image.width < 900 ? image.width : 900;
-			canvasHeight = image.height * (canvasWidth / image.width);
-			grayscaleCanvas.height = canvasHeight;
-			grayscaleCanvas.width = canvasWidth;
-
-			const foo = grayscaleCanvas.getContext('2d');
-
-			foo.drawImage(image, 0, 0, canvasWidth, canvasHeight);
-			const imageData = foo.getImageData(0, 0, canvasWidth, canvasHeight);
-			console.timeEnd('image load event');
-
-			console.time('create grey scale');
-			greyscaleImagedata = makeGreyscale(Uint8ClampedArray.from(imageData.data));
-			console.timeEnd('create grey scale');
-
-
-			console.time('reducedColorImagedata');
-
-			reducedColorImagedata = makeFewColors(
-				Uint8ClampedArray.from(greyscaleImagedata),
-				blackpoint,
-				whitepoint,
-				thirdcolors[colorChoice]
-			);
-			console.timeEnd('reducedColorImagedata');
-		};
+		image.onload = handleImageLoad;
 
 		fileInput.addEventListener('change', function () {
 			var reader = new FileReader();
