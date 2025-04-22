@@ -1,6 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
-	import logo from '$lib/assets/IMG_0608small.jpeg';
+	import logo from '$lib/assets/radish2.jpg';
 
     let { imageLoaded } = $props();
 

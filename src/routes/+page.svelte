@@ -3,7 +3,7 @@
 	import Histogram from '$lib/Histogram.svelte';
 	import ProcessedImage from '$lib/ProcessedImage.svelte';
 	import ImageUpload from '$lib/ImageUpload.svelte';
-	import { derived } from 'svelte/store';
+	import ColorSlider from '$lib/ColorSlider.svelte';
 
 	const thirdcolors = [
 		[255, 204, 204],
@@ -22,11 +22,9 @@
 	let colorChoice = $state(0);
 
 	let hexColor = $derived(rgbToHex(thirdcolors[colorChoice]));
-	/**
-	 * @type {string | Iterable<any>}
-	 */
+
 	let greyscaleImagedata = $state.raw([]);
-	
+
 	let reducedColorImagedata = $derived.by(() => {
 		console.time('reducedColorImagedata');
 
@@ -37,8 +35,8 @@
 			thirdcolors[colorChoice]
 		);
 		console.timeEnd('reducedColorImagedata');
-		return _reducedColorImagedata;});
-
+		return _reducedColorImagedata;
+	});
 
 	function changeColor() {
 		colorChoice = colorChoice + 1 >= thirdcolors.length ? 0 : colorChoice + 1;
@@ -108,55 +106,40 @@
 <main>
 	<h1>Toner</h1>
 	<ImageUpload imageLoaded={handleImageLoad} />
-	<div style="display: flex">
+	<div class="container">
 		<section>
 			<ProcessedImage imageData={reducedColorImagedata} width={canvasWidth} height={canvasHeight} />
 		</section>
-		<section style="display: flex">
-			<Histogram greyscaleImageData={greyscaleImagedata} {blackpoint} {whitepoint} {hexColor} />
-
-			<div style="display: flex">
-				<label for="blackpoint"
-					><div style="padding: 2px;height:2em; width:2.5em; background-color:black; color:white ">
-						{blackpoint}
-					</div>
-					<input
-						class="sliders"
-						bind:value={blackpoint}
-						type="range"
-						min="0"
-						max={whitepoint}
-						step="1"
-					/></label
-				>
-				<label for="whitepoint"
-					><div
-						style="padding: 2px;height:2em; width:2.5em; background-color:{hexColor}; color:white "
-						on:click={changeColor}
-					>
-						{whitepoint}
-					</div>
-					<input
-						class="sliders"
-						bind:value={whitepoint}
-						type="range"
-						min={blackpoint}
-						max="256"
-						step="1"
-					/></label
-				>
+		<section class="controls">
+			<div>
+				<ColorSlider bind:value={blackpoint} min={0} max={whitepoint} color="black" />
+				<ColorSlider
+					bind:value={whitepoint}
+					min={blackpoint}
+					max={256}
+					color={hexColor}
+					on:click={changeColor}
+				/>
 			</div>
+			<Histogram greyscaleImageData={greyscaleImagedata} {blackpoint} {whitepoint} {hexColor} />
 		</section>
 	</div>
 </main>
 
 <style>
-	label {
-		width: 3em;
+	.container {
+		display: flex;
+		flex-direction: column;
+
+		@media (min-width: 600px) {
+			flex-direction: row;
+		}
 	}
-	.sliders {
-		writing-mode: vertical-rl;
-		width: initial;
-		height: 206px;
+	.controls {
+		display: flex;
+		flex-direction: row;
+		border: 1px red solid;
+		margin: 0 0.5em;
+		padding: 0.5em;
 	}
 </style>
