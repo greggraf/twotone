@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import logo from '$lib/assets/radish2.jpg';
 
-    let { imageLoaded } = $props();
+	let { imageLoaded } = $props();
 
 	/**
 	 * @type {HTMLInputElement}
@@ -14,7 +14,6 @@
 		image.onload = () => imageLoaded(image);
 
 		image.src = logo;
-
 
 		fileInput.addEventListener('change', function () {
 			var reader = new FileReader();
@@ -30,7 +29,7 @@
 	});
 </script>
 
-<input bind:this={fileInput} type="file" accept="image/*" capture="user" id="input" />
+<input bind:this={fileInput} type="file" accept="image/*" id="input" />
 
 <style>
 </style>
