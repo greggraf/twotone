@@ -118,7 +118,7 @@
 					min={blackpoint}
 					max={256}
 					color={hexColor}
-					on:click={changeColor}
+					onclick={changeColor}
 				/>
 			</div>
 			<Histogram greyscaleImageData={greyscaleImagedata} {blackpoint} {whitepoint} {hexColor} />

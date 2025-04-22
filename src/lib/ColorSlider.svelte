@@ -1,9 +1,9 @@
 <script>
-	let { value = $bindable(), min, max, color } = $props();
+	let { value = $bindable(), min, max, color, onclick } = $props();
 </script>
 
 <label
-	><button class="swatch" style="--color: {color};" on:click>
+	><button class="swatch" style="--color: {color};" {onclick}>
 		{value}
 	</button>
 	<input class="sliders" bind:value type="range" {min} {max} step="1" /></label
@@ -20,6 +20,7 @@
 	}
 	.sliders {
 		width: 200px;
+		margin: .5em;
 	}
 	label {
 		display: flex;
