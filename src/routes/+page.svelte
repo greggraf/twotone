@@ -6,6 +6,7 @@
 	import ColorSlider from '$lib/ColorSlider.svelte';
 
 	const thirdcolors = [
+		[161, 119, 193],
 		[255, 204, 204],
 		[100, 230, 20],
 		[20, 70, 180],
