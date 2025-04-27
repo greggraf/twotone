@@ -131,7 +131,7 @@
 		display: flex;
 		flex-direction: column;
 
-		@media (min-width: 600px) {
+		@media (min-width: 768px) {
 			flex-direction: row;
 		}
 	}
@@ -141,5 +141,9 @@
 		border: 1px red solid;
 		margin: 0 0.5em;
 		padding: 0.5em;
+		flex-direction: column;
+	}
+	main {
+		min-width: 375px;
 	}
 </style>
