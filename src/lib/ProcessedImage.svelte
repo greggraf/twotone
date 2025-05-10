@@ -31,7 +31,7 @@
 <style>
 	.outputCanvas {
 		border: 1px solid black;
-		max-width: 800px;
+		max-width: 100%;
 		max-height: 80vh;
 	}
 </style>
