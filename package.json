@@ -14,7 +14,7 @@
 		"lint": "prettier --check . && eslint .",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run",
-		"deploy": "npm build && node --env-file=.env ./scripts/deploy.js"
+		"deploy": "npm run build && node --env-file=.env ./scripts/deploy.js"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
