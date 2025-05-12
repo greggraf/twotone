@@ -8,7 +8,7 @@
 	let canvas;
 
 	/**
-	 * @type {CanvasRenderingContext2D}
+	 * @type {CanvasRenderingContext2D | null}
 	 */
 	let ctx;
 
@@ -16,7 +16,7 @@
 		ctx = canvas.getContext('2d');
 	});
 	$effect(() => {
-		if (imageData.length > 0) {
+		if (ctx && imageData.length > 0) {
 			const foo = new Uint8ClampedArray(imageData);
 			const newImageData = new ImageData(foo, width, height);
 			ctx.putImageData(newImageData, 0, 0);

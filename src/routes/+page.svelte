@@ -4,6 +4,7 @@
 	import ProcessedImage from '$lib/ProcessedImage.svelte';
 	import ImageUpload from '$lib/ImageUpload.svelte';
 	import ColorSlider from '$lib/ColorSlider.svelte';
+	import { transformToGreyscale, makeThreeColors, applyMedianFilter } from '$lib/filters';
 
 	const thirdcolors = [
 		[161, 119, 193],
@@ -29,12 +30,13 @@
 	let reducedColorImagedata = $derived.by(() => {
 		console.time('reducedColorImagedata');
 
-		const _reducedColorImagedata = makeFewColors(
+		const _reducedColorImagedata = makeThreeColors(
 			Uint8ClampedArray.from(greyscaleImagedata),
 			blackpoint,
 			whitepoint,
 			thirdcolors[colorChoice]
 		);
+
 		console.timeEnd('reducedColorImagedata');
 		return _reducedColorImagedata;
 	});
@@ -43,38 +45,11 @@
 		colorChoice = colorChoice + 1 >= thirdcolors.length ? 0 : colorChoice + 1;
 	}
 
+	/**
+	 * @param {{ toString: (arg0: number) => string; }[]} rgb
+	 */
 	function rgbToHex(rgb) {
 		return `#${rgb[0].toString(16).padStart(2, '0')}${rgb[1].toString(16).padStart(2, '0')}${rgb[2].toString(16).padStart(2, '0')}`;
-	}
-
-	export function transformToGreyscale(data) {
-		for (let i = 0; i < data.length; i += 4) {
-			const grayscale = 0.21 * data[i] + 0.72 * data[i + 1] + 0.07 * data[i + 2];
-			data[i] = grayscale;
-			data[i + 1] = grayscale;
-			data[i + 2] = grayscale;
-		}
-		return data;
-	}
-
-	export function makeFewColors(data, black = 62, white = 170, thirdcolor = [204, 190, 255]) {
-		for (let i = 0; i < data.length; i += 4) {
-			if (data[i] > white) {
-				data[i] = 255;
-				data[i + 1] = 255;
-				data[i + 2] = 255;
-			} else if (data[i] > black && data[i] < white) {
-				data[i] = thirdcolor[0];
-				data[i + 1] = thirdcolor[1];
-				data[i + 2] = thirdcolor[2];
-			} else {
-				data[i] = 0;
-				data[i + 1] = 0;
-				data[i + 2] = 0;
-			}
-		}
-
-		return data;
 	}
 
 	/**
@@ -90,6 +65,7 @@
 		if (context) {
 			context.drawImage(image, 0, 0, canvasWidth, canvasHeight);
 			const imageData = context.getImageData(0, 0, canvasWidth, canvasHeight);
+			//const hmm = applyMedianFilter(imageData, 2);
 			return transformToGreyscale(imageData.data);
 		}
 	}
@@ -109,11 +85,20 @@
 	<ImageUpload imageLoaded={handleImageLoad} />
 	<div class="container">
 		<section>
-			<ProcessedImage imageData={reducedColorImagedata} width={canvasWidth} height={canvasHeight} />
+			<ProcessedImage 
+				imageData={reducedColorImagedata} 
+				width={canvasWidth} 
+				height={canvasHeight} 
+			/>
 		</section>
 		<section class="controls">
 			<div>
-				<ColorSlider bind:value={blackpoint} min={0} max={whitepoint} color="black" />
+				<ColorSlider 
+					bind:value={blackpoint} 
+					min={0} 
+					max={whitepoint} 
+					color="black" 
+				/>
 				<ColorSlider
 					bind:value={whitepoint}
 					min={blackpoint}

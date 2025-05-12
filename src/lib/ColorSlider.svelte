@@ -1,5 +1,5 @@
 <script>
-	let { value = $bindable(), min, max, color, onclick } = $props();
+	let { value = $bindable(), min, max, color, onclick = () => null } = $props();
 </script>
 
 <label
