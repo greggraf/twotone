@@ -25,11 +25,9 @@
 		[165, 42, 42],
 		[255, 215, 0],
 		[102, 205, 170],
-		[128, 128, 128],
 		[240, 230, 140],
 		[0, 0, 255],
 		[255, 165, 0],
-		[105, 105, 105],
 		[205, 92, 92],
 		[150, 255, 150],
 		[255, 192, 203],
@@ -41,7 +39,7 @@
 	let canvasHeight = $state(120);
 
 	let colorIndices = $state([0, 1]);
-	let colorRanges = $state([78, 110, 180]);
+	let colorRanges = $state([78, 110]);
 
 	let hexColors = $derived(colorIndices.map((pos) => rgbToHex(thirdcolors[pos])));
 
@@ -129,6 +127,24 @@
 				{/each}
 			</div>
 			<Histogram greyscaleImageData={greyscaleImagedata} {colorRanges} {hexColors} />
+			<button
+				onclick={() => {
+					colorRanges = [78, 110];
+					colorIndices = [0];
+				}}>1 color</button
+			>
+			<button
+				onclick={() => {
+					colorRanges = [78, 110, 180];
+					colorIndices = [0, 1];
+				}}>2 colors</button
+			>
+						<button
+				onclick={() => {
+					colorRanges = [78, 110, 180, 210];
+					colorIndices= [0, 1, 2];
+				}}>3 colors</button
+			>
 		</section>
 	</div>
 </main>
