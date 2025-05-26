@@ -14,16 +14,36 @@
 		[180, 201, 90],
 		[50, 150, 250],
 		[90, 180, 20],
-		[204, 180, 20]
+		[204, 180, 20],
+		[240, 179, 105],
+		[14, 122, 255],
+		[255, 204, 0],
+		[128, 0, 128],
+		[255, 105, 180],
+		[0, 128, 0],
+		[220, 245, 245],
+		[165, 42, 42],
+		[255, 215, 0],
+		[102, 205, 170],
+		[128, 128, 128],
+		[240, 230, 140],
+		[0, 0, 255],
+		[255, 165, 0],
+		[105, 105, 105],
+		[205, 92, 92],
+		[150, 255, 150],
+		[255, 192, 203],
+		[60, 179, 113],
+		[220, 190, 255]
 	];
 
 	let canvasWidth = $state(120);
 	let canvasHeight = $state(120);
-	let blackpoint = $state(78);
-	let whitepoint = $state(110);
-	let colorChoice = $state(0);
 
-	let hexColor = $derived(rgbToHex(thirdcolors[colorChoice]));
+	let colorIndices = $state([0, 1]);
+	let colorRanges = $state([78, 110, 180]);
+
+	let hexColors = $derived(colorIndices.map((pos) => rgbToHex(thirdcolors[pos])));
 
 	let greyscaleImagedata = $state.raw([]);
 
@@ -32,17 +52,26 @@
 
 		const _reducedColorImagedata = makeThreeColors(
 			Uint8ClampedArray.from(greyscaleImagedata),
-			blackpoint,
-			whitepoint,
-			thirdcolors[colorChoice]
+			thirdcolors,
+			colorIndices,
+			colorRanges
 		);
 
 		console.timeEnd('reducedColorImagedata');
 		return _reducedColorImagedata;
 	});
 
-	function changeColor() {
-		colorChoice = colorChoice + 1 >= thirdcolors.length ? 0 : colorChoice + 1;
+	function changeColor(index = 0) {
+		if (index > 0) {
+			const correctedIndex = index - 1;
+			return () => {
+				colorIndices[correctedIndex] =
+					colorIndices[correctedIndex] + 1 >= thirdcolors.length
+						? 0
+						: colorIndices[correctedIndex] + 1;
+			};
+		}
+		return null;
 	}
 
 	/**
@@ -85,29 +114,21 @@
 	<ImageUpload imageLoaded={handleImageLoad} />
 	<div class="container">
 		<section>
-			<ProcessedImage 
-				imageData={reducedColorImagedata} 
-				width={canvasWidth} 
-				height={canvasHeight} 
-			/>
+			<ProcessedImage imageData={reducedColorImagedata} width={canvasWidth} height={canvasHeight} />
 		</section>
 		<section class="controls">
 			<div>
-				<ColorSlider 
-					bind:value={blackpoint} 
-					min={0} 
-					max={whitepoint} 
-					color="black" 
-				/>
-				<ColorSlider
-					bind:value={whitepoint}
-					min={blackpoint}
-					max={256}
-					color={hexColor}
-					onclick={changeColor}
-				/>
+				{#each colorRanges as color, index}
+					<ColorSlider
+						bind:value={colorRanges[index]}
+						min={index === 0 ? 0 : colorRanges[index - 1]}
+						max={index === colorRanges.length - 1 ? 256 : colorRanges[index + 1]}
+						color={index === 0 ? 'black' : hexColors[index - 1]}
+						onclick={changeColor(index)}
+					/>
+				{/each}
 			</div>
-			<Histogram greyscaleImageData={greyscaleImagedata} {blackpoint} {whitepoint} {hexColor} />
+			<Histogram greyscaleImageData={greyscaleImagedata} {colorRanges} {hexColors} />
 		</section>
 	</div>
 </main>

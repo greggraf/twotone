@@ -10,7 +10,34 @@
 		return numbers.map((value) => scaleValue(value, max));
 	}
 
-	let { greyscaleImageData = [], blackpoint, whitepoint, hexColor } = $props();
+	function figureoutoverlays(colorRanges, hexColors) {
+		const overlays = [];
+		for (let i = 0; i < colorRanges.length; i++) {
+			if (i === 0) {
+				overlays.push({
+					start: 0,
+					end: colorRanges[i],
+					color: '#000'
+				});
+			}
+			if (i != colorRanges.length - 1) {
+				overlays.push({
+					start: colorRanges[i],
+					end: colorRanges[i + 1],
+					color: hexColors[i]
+				});
+			}
+
+			overlays.push({
+				start: colorRanges[i],
+				end: 256,
+				color: '#fff'
+			});
+		}
+		return overlays;
+	}
+
+	let { greyscaleImageData = [], colorRanges = [], hexColors } = $props();
 
 	let histogram = $derived.by(() => {
 		const histogram = new Array(256).fill(0);
@@ -20,6 +47,8 @@
 		}
 		return scaleValues(histogram);
 	});
+
+	let overlays = $derived.by(() => figureoutoverlays(colorRanges, hexColors));
 </script>
 
 {#if greyscaleImageData.length > 0}
@@ -40,34 +69,46 @@
 						<rect x={i * 1} y={histogramHeight - bar} width="1" height={bar} />
 					{/each}
 				</g>
-				<g fill="black">
+
+				{#each overlays as props, index}
+					<g fill={props.color}>
+						<rect
+							x={props.start}
+							y="0"
+							width={props.end - props.start}
+							height={histogramHeight}
+							class="overlay"
+						/>
+					</g>
+				{/each}
+				<!-- <g fill="black">
 					<rect
 						x="0"
 						y="0"
-						width={blackpoint}
+						width={colorRanges[0]}
 						height={histogramHeight}
 						fill="black"
 						class="overlay"
 					/>
 				</g>
-				<g fill={hexColor}>
+				<g fill={hexColors[0]}>
 					<rect
-						x={blackpoint}
+						x={colorRanges[0]}
 						y="0"
-						width={whitepoint - blackpoint}
+						width={colorRanges[1] - colorRanges[0]}
 						height={histogramHeight}
 						class="overlay"
 					/>
 				</g>
 				<g fill="#fff">
 					<rect
-						x={whitepoint}
+						x={colorRanges[1]}
 						y="0"
-						width={256 - whitepoint}
+						width={256 - colorRanges[1]}
 						height={histogramHeight}
 						class="overlay"
 					/>
-				</g>
+				</g> -->
 			</g>
 		</svg>
 	</div>
